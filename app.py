@@ -1,7 +1,7 @@
 from ctypes import alignment
-from tkinter import font
-from tkinter.ttk import Style
-from turtle import color, width
+#from tkinter import font
+#from tkinter.ttk import Style
+#from turtle import color, width
 import dash
 import dash_bootstrap_components as dbc
 #import dash_core_components as dcc
