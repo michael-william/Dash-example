@@ -1,15 +1,15 @@
-#from ctypes import alignment
-#from tkinter import font
-#from tkinter.ttk import Style
-from turtle import width #color,
+from ctypes import alignment
+from tkinter import font
+from tkinter.ttk import Style
+from turtle import color, width
 import dash
 import dash_bootstrap_components as dbc
 #import dash_core_components as dcc
 from dash import dcc
 from dash import html
 #from dash_html_components import Label
-#from folium import Div
-#from matplotlib import colors
+from folium import Div
+from matplotlib import colors
 import plotly.graph_objects as go
 import numpy as np
 from numpy import size
@@ -18,7 +18,7 @@ from pandas.io.formats import style
 import pandas as pd
 from dash.dependencies import Input, Output
 from sqlalchemy import column
-#from sympy import carmichael
+from sympy import carmichael
 import os
 import transformations as tr
 
