@@ -147,8 +147,9 @@ top5_units_monthly_graph = tr.top5_units_monthly_plot(top5_units_monthly, top_co
 # defining the app
 app = dash.Dash(
     __name__,
-    external_stylesheets=["/Users/michaelcondon/Documents/DataAndStories/Codebase/Dash-template/assets/bootstrap.css"]
+    external_stylesheets=[cwd+"/assets/bootstrap.css"]
 )
+server = app.server
 
 # App layout
 app.layout = html.Div(
