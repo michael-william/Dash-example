@@ -150,6 +150,7 @@ top5_units_monthly_graph = tr.top5_units_monthly_plot(top5_units_monthly, top_co
 # defining the app
 app = dash.Dash(
     __name__,
+    title="Product performance",
     external_stylesheets=[cwd+"/assets/bootstrap.css"]
 )
 server = app.server # Important! Nedded for hosting on Heroku
