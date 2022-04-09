@@ -97,6 +97,9 @@ cwd = os.getcwd()
 # Add path for data
 file_path = cwd+'/data/Condensed data from online retail.csv'
 
+# Getting logo
+logo = cwd+'/assets/dataandstories_logo 300.png'
+
 # Importing data
 df = pd.read_csv(file_path,
                 parse_dates=["InvoiceDay"])
@@ -149,7 +152,7 @@ app = dash.Dash(
     __name__,
     external_stylesheets=[cwd+"/assets/bootstrap.css"]
 )
-server = app.server
+server = app.server # Important! Nedded for hosting on Heroku
 
 # App layout
 app.layout = html.Div(
@@ -169,6 +172,18 @@ app.layout = html.Div(
                    # options = [{'label': x, 'value':x} for x in ordered['Country'].unique()],
                     #value = []
                 #),
+                html.A(
+                    html.Img(
+                        src=app.get_asset_url('ds_logo.png'),
+                        alt='Dashboard built and designed by Michael at Data and Stories',
+                        height='70px'
+                    ),
+                    href='https://www.dataandstories.com',
+                    target="_blank",
+                    style={'position': 'absolute',
+                        'top':-65,
+                        'right':30,}
+                    ),
                 dcc.RangeSlider(
                             id='month-slider',
                             min=1,
