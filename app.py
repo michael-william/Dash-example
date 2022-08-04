@@ -1,25 +1,12 @@
-from ctypes import alignment
-#from tkinter import font
-#from tkinter.ttk import Style
-#from turtle import color, width
+from audioop import minmax
+import os
+from pyclbr import Class
 import dash
 import dash_bootstrap_components as dbc
-#import dash_core_components as dcc
-from dash import dcc
-from dash import html
-#from dash_html_components import Label
-from folium import Div
-from matplotlib import colors
-import plotly.graph_objects as go
-import numpy as np
-from numpy import size
-from pandas.io.formats import style
-#import plotly.express as px
 import pandas as pd
+from dash import dcc, html
 from dash.dependencies import Input, Output
-from sqlalchemy import column
-from sympy import carmichael
-import os
+
 import transformations as tr
 
 #Formats
@@ -112,44 +99,12 @@ df['Line totals'] = df['Quantity'] * df['UnitPrice']
 # Filtered datasets by orders and refunds
 # Only using orders from here on out
 ordered = df[(df['TransType']=='Ordered') & (df['Year']=='2020')].copy().reset_index()
-#refunds = df[(df['TransType']!='Ordered') & (df['Year']=='2020')].copy().reset_index()
-"""
-#Card 1 (Sales total and trend)
-sales_total = tr.sales_total_func(ordered)
-total_sold_short = tr.human_format(sales_total)
-monthly_sales_df = tr.monthly_sales_func(ordered, tr.month_order)
 
-#Card 2 (Top 5 sales items)
-top5_sales,top5_sales_list = tr.top5_sales_func(ordered)
-
-#Card 5 (Top 5 monthly sales items)
-top5_sales_monthly = tr.top5_sales_monthly_func(ordered,top5_sales_list,month_dict.values())
-
-# Card 3 (Units sold number)
-units_total = tr.units_total_func(ordered)
-units_total_short = tr.human_format(units_total)
-monthly_units_df = tr.monthly_units_func(ordered, tr.month_order)
- 
-#Card 4 (Top 5 its by units)
-top5_units,top5_units_list = tr.top5_units_func(ordered)
-
-#Card 6
-top5_units_monthly = tr.top5_units_monthly_func(ordered,top5_units_list, month_dict.values())
-
-#Colors
-top_color_dict = tr.top_colors(top5_sales_list, top5_units_list, top_ten_light)
-
-#Graphs
-monthly_sales_graph = tr.monthly_sales_plot_func(monthly_sales_df,pink_hex)
-top5_sales_graph = tr.top5_sales_plot(top5_sales,top_color_dict)
-top5_sales_monthly_graph = tr.top5_sales_monthly_plot(top5_sales_monthly, top_color_dict)
-monthly_units_graph = tr.monthly_units_plot_func(monthly_units_df, pink_rgba)
-top5_units_graph = tr.top5_units_plot(top5_units,top_color_dict)
-top5_units_monthly_graph = tr.top5_units_monthly_plot(top5_units_monthly, top_color_dict)
-"""
 # defining the app
 app = dash.Dash(
     __name__,
+    meta_tags=[{'name': 'viewport',
+    'content': 'width=device-width, initial-scale=1.0, maximum-scale=1.2, minimum-scale=0.5,'}],
     title="Product performance",
     external_stylesheets=[cwd+"/assets/bootstrap.css"]
 )
@@ -161,137 +116,230 @@ app.layout = html.Div(
         html.Div(
             className="container",
             children=[
+        # Header
         dbc.Row([
-            dbc.Col(children=[
+            # Ttile and subtitle
+            dbc.Col(
+                className="col-12 col-sm-11 col-md-11 col-lg-5",
+                children=[
                 html.H1("Product perfomance"),
                 html.H3("Top products & trends")
-                ]),
-            dbc.Col([
-                #dcc.Dropdown(
-                 #   id='month-dd',
-                  #  multi=True,
-                   # options = [{'label': x, 'value':x} for x in ordered['Country'].unique()],
-                    #value = []
-                #),
-                html.A(
-                    html.Img(
-                        src=app.get_asset_url('ds_logo.png'),
-                        alt='Dashboard built and designed by Michael at Data and Stories',
-                        height='70px'
+                ],
+                #xs=12, sm=12, md=6, lg=6, xl=6,
+                ),
+            dbc.Col(
+                className="col-12 col-sm-11 col-md-11 col-lg-6",
+                children=[
+                    html.Div(
+                        html.A(
+                            html.Img(
+                                src=app.get_asset_url('ds_logo.png'),
+                                alt='Dashboard built and designed by Michael at Data and Stories',
+                                height='70px',
+                                style={
+                                #'text-align':'right'
+                                }
+                            ),
+                            href='https://www.dataandstories.com',
+                            target="_blank",
+                            style={
+                                },
+                            ),
+                        style={
+                                'text-align': 'right'
+                        }
                     ),
-                    href='https://www.dataandstories.com',
-                    target="_blank",
-                    style={'position': 'absolute',
-                        'top':-65,
-                        'right':30,}
+                    dcc.RangeSlider(
+                                id='month-slider',
+                                min=1,
+                                max=12,
+                                step=1,
+                                value=[1,12],
+                                allowCross=False,
+                                pushable=0,
+                                marks=month_dict,
+                                className="rc-slider",
                     ),
-                dcc.RangeSlider(
-                            id='month-slider',
-                            min=1,
-                            max=12,
-                            step=1,
-                            value=[1,12],
-                            allowCross=False,
-                            pushable=0,
-                            marks=month_dict,
-                            className="rc-slider",
-                        ),
-                        ],
-                        width=4,
-                        style={'position': 'absolute',
-                        'bottom':30,
-                        'right':0,
-                                    }    
+                ],
+                style={
+                    #'position': 'absolute',
+                    #'bottom':30,
+                    #'right':0,
+                    #'minmaxwidth':'400px,auto',
+                    },
+                #className="list-group-horizontal-md",
+                #scaling columns for different size screens
+                #xs=12, sm=12, md=6, lg=6, xl=6,    
                 )
             ],
-            style={'position': 'relative'
-                                    }
+        style={
+            'position': 'fixed',
+            #'display': 'flex',
+            'top':0,
+            'left':0,
+            'width':'101%',
+            'padding-top':'1em',
+            'background-color':'#fff',
+            'z-index':'999',
+            'box-shadow': '0px 10px 30px rgba(225,225,225,0.7)',
+            #'flex-direction':'row',
+            
+                                },
+                                    
             ),
+        
+        # Main content
         dbc.Row(
-            [
-                dbc.Col([
-                    html.H6("Revenue this year"),
-                    html.H4(
-                        #"$"+total_sold_short,
-                        id='total-sold-short',
-                        ),
-                    dcc.Graph(
-                        id='monthly-sales-graph',
-                        #figure=monthly_sales_graph,
-                        config={'displayModeBar': False}
-                        )
+            dbc.Col([
+                #Spacer row
+                dbc.Row(
+                    [
                 ],
-                className="raised-container",
-                style={'width':'23%'},
-                width=3
-                ),
-                dbc.Col([
-                    html.H6("Top 5 sales items"),
-                    dcc.Graph(
-                        id='top5-sales-graph',
-                        #figure=top5_sales_graph,
-                        config={'displayModeBar': False}
-                        )],
-                className="raised-container",
-                style={'width':'23%'},
-                width=3,
-                ),
-                dbc.Col([
-                    html.H6("Items sold this year"),
-                    html.H4(
-                        #units_total_short,
-                        id='units-total-short',),
-                    dcc.Graph(
-                        id='monthly-units-graph',
-                        #figure=monthly_units_graph,
-                        config={'displayModeBar': False}
-                        )],
-                className="raised-container",
-                style={'width':'23%'},
-                width=3
-                ),
-                dbc.Col([
-                    html.H6("Top 5 items sold"),
-                    dcc.Graph(
-                        id='top5-units-graph',
-                        #figure=top5_units_graph,
-                        config={'displayModeBar': False}
-                        )],
-                className="raised-container",
-                style={'width':'23%'},
-                width=3,
-                ),
-            ],
-            style={'margin-top':'15px', 'row-gap':"10px"}
-        ),
-        dbc.Row(
-            [
-                dbc.Col([
-                    html.H6("Top 5 sales trend"),
-                    dcc.Graph(
-                        id='top5-sales-monthly-graph',
-                        #figure=top5_sales_monthly_graph,
-                        config={'displayModeBar': False}
+                className="row-sm sow-md",
+                style={
+                    'height':'250px'
+                }),
+                
+                # Revenue cards
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Row([
+                            html.H2("Revenue"),
+                        ],
+                        ),
+                        dbc.Row([
+                            dbc.Col(
+                                className="col-12 col-sm-12 col-md-12 col-lg-5",
+                                children=[
+                                    html.P('Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo.'),
+                                    html.Ul(children=[
+                                        html.Li('Pellentesque fermentum dolor. Aliquam quam lectus, facilisis auctor, ultrices ut, elementum vulputate, nunc.'),
+                                        html.Li('Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.'),
+                                        html.Li('Pellentesque fermentum dolor. Aliquam quam lectus, facilisis auctor, ultrices ut, elementum vulputate, nunc.'),
+                                        html.Li('Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.'),
+                                        html.Li('Pellentesque fermentum dolor. Aliquam quam lectus, facilisis auctor, ultrices ut, elementum vulputate, nunc.'),
+                                        html.Li('Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.'),
+                                        ], id='insights-revenue', style={'width':'100%', 'height':'100%'}),
+                                ],
+                                #style={'width':'49%'},
+                                #width=6,
+                            ),
+                            dbc.Col(
+                                className="col-12 col-sm-12 col-md-12 col-lg-6",
+                                children=[
+                                    dbc.Row([
+                                        html.H6("Total revenue"),
+                                        html.H4(
+                                        #"$"+total_sold_short,
+                                        id='total-sold-short',
+                                        ),
+                                        dcc.Graph(
+                                            id='monthly-sales-graph',
+                                            #figure=monthly_sales_graph,
+                                            config={'displayModeBar': False}
+                                            )
+                                        ],
+                                        className="raised-container",
+                                        style={'margin-bottom':'1em', 'display':'flex'},
+                                    ),
+                                    dbc.Row([
+                                        html.H6("Top 5 sales items"),
+                                        dcc.Graph(
+                                            id='top5-sales-graph',
+                                            #figure=top5_sales_graph,
+                                            config={'displayModeBar': False}
+                                        )
+                                    ],
+                                        className="raised-container",
+                                        style={'display':'flex'},
+                                        ),
+                                    
+                            ],
+                                #style={'width':'49%'},
+                                #width=6,
+                            ),
+                        ],
                         )
                     ],
-                className="raised-container",
+                    )
+                ],
+                style={'margin-top':'15px', 'row-gap':"10px"}
                 ),
-                dbc.Col([
-                    html.H6("Top 5 sold items"),
-                    dcc.Graph(
-                        id='top5-units-monthly-graph',
-                        #figure=top5_units_monthly_graph,
-                        config={'displayModeBar': False}
-                        )
-                    ],
-                className="raised-container",
+
+                
+                # Item cards
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Row([
+                            html.H2("Items sold"),
+                        ],
+                        ),
+                        dbc.Row([
+                            dbc.Col(
+                                # Important for responsive design
+                                className="col-12 col-sm-12 col-md-12 col-lg-6 order-2 order-sm-2 order-md-2 order-lg-1",
+                                children=[
+                                dbc.Row([
+                                    html.H6("Items sold this year"),
+                                    html.H4(
+                                        #units_total_short,
+                                        id='units-total-short',),
+                                    dcc.Graph(
+                                        id='monthly-units-graph',
+                                        #figure=monthly_units_graph,
+                                        config={'displayModeBar': False}
+                                        )],
+                                    className="raised-container",
+                                    style={'margin-bottom':'1em'}
+                                ),
+                                dbc.Row([
+                                    html.H6("Top 5 items sold"),
+                                    dcc.Graph(
+                                        id='top5-units-graph',
+                                        #figure=top5_units_graph,
+                                        config={'displayModeBar': False},
+                                        style={}
+                                        )],
+                                    className="raised-container",
+                                    ),
+                                
+                            ],
+                                
+                            ),
+                            dbc.Col(
+                                # Important for responsive design
+                                className="col-12 col-sm-12 col-md-12 col-lg-5 order-1 order-sm-1 order-md-1 order-lg-2 ",
+                                children=[
+                                    html.P('Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo.'),
+                                    html.Ul(children=[
+                                    html.Li('Pellentesque fermentum dolor. Aliquam quam lectus, facilisis auctor, ultrices ut, elementum vulputate, nunc.'),
+                                    html.Li('Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.'),
+                                    html.Li('Pellentesque fermentum dolor. Aliquam quam lectus, facilisis auctor, ultrices ut, elementum vulputate, nunc.'),
+                                    html.Li('Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.'),
+                                    html.Li('Pellentesque fermentum dolor. Aliquam quam lectus, facilisis auctor, ultrices ut, elementum vulputate, nunc.'),
+                                    html.Li('Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.'),
+                                    ], id='insights-items', style={'width':'100%', 'height':'100%'}),
+                                ],
+                                
+                            ),
+                        ],
+                    )
+                    ])
+                ],
+                style={'margin-top':'35px', 'row-gap':"10px"}
                 ),
             ],
-            style={'margin-top':'10px'}
+            style={'margin-left': 'clac(11/12)'},
+            #xs=10, sm=8, md=5, lg=6, xl=5
+            )
         ),
+        # Spacer row sits behind header
+        
+        
+        
         ]
         )
-    ]
+    ],
 )
 
 @app.callback(
@@ -302,8 +350,6 @@ app.layout = html.Div(
     Output(component_id="units-total-short",component_property="children"),
     Output(component_id="monthly-units-graph",component_property="figure"),
     Output(component_id="top5-units-graph",component_property="figure"),
-    Output(component_id="top5-sales-monthly-graph",component_property="figure"),
-    Output(component_id="top5-units-monthly-graph",component_property="figure")
     ],
     [Input(component_id="month-slider", component_property='value')]
 )
@@ -346,7 +392,7 @@ def update_graphs(months):
     top5_units_graph = tr.top5_units_plot(top5_units,top_color_dict)
     top5_units_monthly_graph = tr.top5_units_monthly_plot(top5_units_monthly, top_color_dict)
 
-    return "$"+total_sold_short, monthly_sales_graph, top5_sales_graph, units_total_short, monthly_units_graph, top5_units_graph, top5_sales_monthly_graph, top5_units_monthly_graph
+    return "$"+total_sold_short, monthly_sales_graph, top5_sales_graph, units_total_short, monthly_units_graph, top5_units_graph, 
     
 
 
